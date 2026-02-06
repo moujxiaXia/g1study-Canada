@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>练习模式 - 加拿大G1驾驶考试学习软件</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fb;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option-btn {
+            text-align: left;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .option-btn:hover {
+            transform: translateX(5px);
+        }
+        
+        .progress-bar-custom {
+            height: 10px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        footer {
+            background-color: #212529;
+            color: white;
+            padding: 2rem 0;
+        }
+        
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+        }
+        
+        .footer-link:hover {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-car text-primary"></i> G1驾驶考试学习
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home"></i> 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/practice"><i class="fas fa-edit"></i> 练习模式</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/wrong-answers"><i class="fas fa-bookmark"></i> 错题本</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/practice-history"><i class="fas fa-history"></i> 练习历史</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/question-management"><i class="fas fa-cog"></i> 题库管理</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4"><i class="fas fa-edit text-primary"></i> 练习模式</h2>
+            </div>
+        </div>
+
+        <!-- 设置面板 -->
+        <div class="row mb-4" id="setup-panel">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-cog"></i> 练习设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="setup-form">
+                            <div class="mb-3">
+                                <label class="form-label">语言选择</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="language" id="lang-zh" value="zh" checked>
+                                        <label class="form-check-label" for="lang-zh">中文</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="language" id="lang-en" value="en">
+                                        <label class="form-check-label" for="lang-en">English</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">来源选择</label>
+                                <select class="form-select" id="source-select">
+                                    <option value="">全部来源</option>
+                                    <!-- 动态填充来源选项 -->
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">题目数量</label>
+                                <select class="form-select" id="question-count">
+                                    <option value="5">5题</option>
+                                    <option value="10" selected>10题</option>
+                                    <option value="20">20题</option>
+                                    <option value="50">50题</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-play-circle"></i> 开始练习
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 练习面板 -->
+        <div class="row mb-4 d-none" id="practice-panel">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-question-circle"></i> 题目练习</h5>
+                        <div>
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-check"></i> 正确: <span id="correct-count">0</span>
+                            </span>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-times"></i> 错误: <span id="wrong-count">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- 进度条 -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <small>进度</small>
+                                <small><span id="current-question">0</span> / <span id="total-questions">0</span></small>
+                            </div>
+                            <div class="progress progress-bar-custom">
+                                <div class="progress-bar bg-success" role="progressbar" id="progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 题目内容 -->
+                        <div id="question-container">
+                            <!-- 题目将通过JavaScript动态加载 -->
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div class="mt-4 d-none" id="action-buttons">
+                            <button class="btn btn-primary" id="next-question">
+                                <i class="fas fa-arrow-right"></i> 下一题
+                            </button>
+                            <button class="btn btn-success d-none" id="finish-practice">
+                                <i class="fas fa-flag-checkered"></i> 完成练习
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果面板 -->
+        <div class="row mb-4 d-none" id="result-panel">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie"></i> 练习结果</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <h3 class="mb-4">练习完成!</h3>
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h4 class="card-title" id="result-total">0</h4>
+                                        <p class="card-text">总题数</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h4 class="card-title" id="result-correct">0</h4>
+                                        <p class="card-text">正确</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-danger text-white">
+                                    <div class="card-body">
+                                        <h4 class="card-title" id="result-wrong">0</h4>
+                                        <p class="card-text">错误</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h1 class="display-4 text-primary mb-4" id="result-score">0%</h1>
+                        <p class="lead">您的得分</p>
+                        <button class="btn btn-primary btn-lg" id="restart-practice">
+                            <i class="fas fa-redo"></i> 重新开始
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <h5 class="mb-3">加拿大G1驾驶考试学习软件</h5>
+                    <p class="mb-0">全面提升您的驾驶理论知识，助您顺利通过G1考试。</p>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">快速链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="footer-link">首页</a></li>
+                        <li><a href="/practice" class="footer-link">练习模式</a></li>
+                        <li><a href="/wrong-answers" class="footer-link">错题本</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">联系我们</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="footer-link"><i class="fab fa-github me-2"></i>GitHub</a></li>
+                        <li><a href="#" class="footer-link"><i class="fas fa-envelope me-2"></i>支持邮箱</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 加拿大G1驾驶考试学习软件. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let sessionId = null;
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置表单提交事件
+            document.getElementById('setup-form').addEventListener('submit', startPractice);
+            
+            // 按钮事件
+            document.getElementById('next-question').addEventListener('click', showNextQuestion);
+            document.getElementById('finish-practice').addEventListener('click', finishPractice);
+            document.getElementById('restart-practice').addEventListener('click', restartPractice);
+            
+            // 加载来源选项
+            loadSources();
+        });
+
+        // 加载来源选项
+        function loadSources() {
+            fetch('/api/question-sources')
+            .then(response => response.json())
+            .then(data => {
+                const sourceSelect = document.getElementById('source-select');
+                
+                // 添加来源选项
+                data.sources.forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source;
+                    option.textContent = source;
+                    sourceSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // 开始练习
+        function startPractice(e) {
+            e.preventDefault();
+            
+            // 获取设置参数
+            const language = document.querySelector('input[name="language"]:checked').value;
+            const source = document.getElementById('source-select').value;
+            const totalQuestions = parseInt(document.getElementById('question-count').value);
+            
+            // 显示练习面板
+            document.getElementById('setup-panel').classList.add('d-none');
+            document.getElementById('practice-panel').classList.remove('d-none');
+            
+            // 初始化计数器
+            currentQuestionIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            updateCounters();
+            
+            // 更新进度条
+            document.getElementById('total-questions').textContent = totalQuestions;
+            updateProgressBar();
+            
+            // 创建练习会话
+            fetch('/api/practice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    language: language,
+                    total_questions: totalQuestions
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                sessionId = data.session_id;
+                
+                // 构建获取题目URL
+                const params = new URLSearchParams();
+                params.append('language', language);
+                params.append('limit', totalQuestions);
+                if (source) {
+                    params.append('source', source);
+                }
+                
+                // 获取题目
+                return fetch(`/api/practice/questions?${params}`);
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                questions = data;
+                if (questions.length > 0) {
+                    showQuestion(0);
+                } else {
+                    alert('没有找到题目，请检查题库或爬取新题目。');
+                    document.getElementById('setup-panel').classList.remove('d-none');
+                    document.getElementById('practice-panel').classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('加载题目时出错，请稍后重试。错误详情: ' + error.message);
+            });
+        }
+
+        // 显示题目
+        function showQuestion(index) {
+            if (index >= questions.length) return;
+            
+            const question = questions[index];
+            currentQuestionIndex = index;
+            
+            // 更新进度显示
+            document.getElementById('current-question').textContent = index + 1;
+            updateProgressBar();
+            
+            // 构建选项HTML
+            let optionsHtml = '';
+            for (const [key, value] of Object.entries(question.options)) {
+                optionsHtml += `
+                    <button class="btn btn-outline-primary option-btn w-100" data-option="${key}">
+                        <strong>${key}.</strong> ${value}
+                    </button>
+                `;
+            }
+            
+            // 构建图片HTML（如果存在）
+            let imageHtml = '';
+            if (question.image_path) {
+                // 确保路径格式正确
+                let imgPath = question.image_path;
+                if (!imgPath.startsWith('/')) {
+                    imgPath = '/' + imgPath;
+                }
+                imageHtml = `<div class="text-center mb-4"><img src="${imgPath}" class="img-fluid" style="max-height: 300px;" alt="题目图片"></div>`;
+            }
+            
+            // 构建题目HTML
+            const questionHtml = `
+                <h5 class="mb-4">${index + 1}. ${question.question_text}</h5>
+                ${imageHtml}
+                <div class="options-container">
+                    ${optionsHtml}
+                </div>
+            `;
+            
+            document.getElementById('question-container').innerHTML = questionHtml;
+            
+            // 为选项按钮添加事件监听器
+            document.querySelectorAll('.option-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const selectedOption = this.getAttribute('data-option');
+                    submitAnswer(selectedOption, question);
+                });
+            });
+            
+            // 隐藏操作按钮
+            document.getElementById('action-buttons').classList.add('d-none');
+        }
+
+        // 提交答案
+        function submitAnswer(selectedOption, question) {
+            // 禁用所有选项按钮
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.disabled = true;
+                // 高亮显示用户选择
+                if (btn.getAttribute('data-option') === selectedOption) {
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+                }
+            });
+            
+            // 提交答案到服务器
+            fetch('/api/practice/answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    question_id: question.id,
+                    user_answer: selectedOption
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 从服务器响应中获取正确答案
+                const correctId = data.correct_answer || question.correct_id;
+                const isCorrect = data.is_correct;
+                
+                // 显示正确答案
+                document.querySelectorAll('.option-btn').forEach(btn => {
+                    const option = btn.getAttribute('data-option');
+                    if (option === correctId) {
+                        btn.classList.remove('btn-outline-primary');
+                        btn.classList.add('btn-success');
+                    }
+                });
+                
+                // 更新计数器
+                if (isCorrect) {
+                    correctCount++;
+                } else {
+                    wrongCount++;
+                }
+                updateCounters();
+                
+                // 显示解释
+                const explanationHtml = `
+                    <div class="alert ${isCorrect ? 'alert-success' : 'alert-danger'} mt-3">
+                        <strong>${isCorrect ? '正确!' : '错误!'}</strong> 正确答案是: ${correctId}
+                        ${question.explanation ? `<br><strong>解释:</strong> ${question.explanation}` : ''}
+                    </div>
+                `;
+                document.getElementById('question-container').insertAdjacentHTML('beforeend', explanationHtml);
+                
+                // 显示操作按钮
+                document.getElementById('action-buttons').classList.remove('d-none');
+                
+                // 如果是最后一题，显示完成按钮
+                if (currentQuestionIndex === questions.length - 1) {
+                    document.getElementById('next-question').classList.add('d-none');
+                    document.getElementById('finish-practice').classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // 即使服务器出错，也显示本地的正确答案
+                const correctId = question.correct_id;
+                const isCorrect = selectedOption === correctId;
+                
+                // 显示正确答案
+                document.querySelectorAll('.option-btn').forEach(btn => {
+                    const option = btn.getAttribute('data-option');
+                    if (option === correctId) {
+                        btn.classList.remove('btn-outline-primary');
+                        btn.classList.add('btn-success');
+                    }
+                });
+                
+                // 更新计数器
+                if (isCorrect) {
+                    correctCount++;
+                } else {
+                    wrongCount++;
+                }
+                updateCounters();
+                
+                // 显示解释
+                const explanationHtml = `
+                    <div class="alert ${isCorrect ? 'alert-success' : 'alert-danger'} mt-3">
+                        <strong>${isCorrect ? '正确!' : '错误!'}</strong> 正确答案是: ${correctId}
+                        ${question.explanation ? `<br><strong>解释:</strong> ${question.explanation}` : ''}
+                    </div>
+                `;
+                document.getElementById('question-container').insertAdjacentHTML('beforeend', explanationHtml);
+                
+                // 显示操作按钮
+                document.getElementById('action-buttons').classList.remove('d-none');
+                
+                // 如果是最后一题，显示完成按钮
+                if (currentQuestionIndex === questions.length - 1) {
+                    document.getElementById('next-question').classList.add('d-none');
+                    document.getElementById('finish-practice').classList.remove('d-none');
+                }
+            });
+        }
+
+        // 显示下一题
+        function showNextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                showQuestion(currentQuestionIndex + 1);
+            }
+        }
+
+        // 完成练习
+        function finishPractice() {
+            // 提交练习完成请求
+            fetch('/api/practice/finish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 显示结果面板
+                document.getElementById('practice-panel').classList.add('d-none');
+                document.getElementById('result-panel').classList.remove('d-none');
+                
+                // 填充结果数据
+                document.getElementById('result-total').textContent = data.total_questions;
+                document.getElementById('result-correct').textContent = data.correct_answers;
+                document.getElementById('result-wrong').textContent = data.wrong_answers;
+                document.getElementById('result-score').textContent = data.score + '%';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('提交练习结果时出错，请稍后重试。');
+            });
+        }
+
+        // 重新开始练习
+        function restartPractice() {
+            // 隐藏结果面板，显示设置面板
+            document.getElementById('result-panel').classList.add('d-none');
+            document.getElementById('setup-panel').classList.remove('d-none');
+        }
+
+        // 更新计数器
+        function updateCounters() {
+            document.getElementById('correct-count').textContent = correctCount;
+            document.getElementById('wrong-count').textContent = wrongCount;
+        }
+
+        // 更新进度条
+        function updateProgressBar() {
+            const total = parseInt(document.getElementById('total-questions').textContent);
+            const current = parseInt(document.getElementById('current-question').textContent);
+            const percentage = total > 0 ? (current / total) * 100 : 0;
+            document.getElementById('progress-bar').style.width = percentage + '%';
+        }
+    </script>
+</body>
+</html>

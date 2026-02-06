@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题库管理 - 加拿大G1驾驶考试学习软件</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fb;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .crawl-progress {
+            height: 10px;
+        }
+        
+        footer {
+            background-color: #212529;
+            color: white;
+            padding: 2rem 0;
+        }
+        
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+        }
+        
+        .footer-link:hover {
+            color: white;
+        }
+        
+        .question-item {
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .question-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .filter-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .question-card {
+            border: 1px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .question-card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            padding: 15px;
+            font-weight: bold;
+        }
+        
+        .question-card-body {
+            padding: 15px;
+        }
+        
+        .option-item {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .option-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .option-item.correct {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .option-item.selected {
+            background-color: #cce7ff;
+            border: 1px solid #99d6ff;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-car text-primary"></i> G1驾驶考试学习
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home"></i> 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/practice"><i class="fas fa-edit"></i> 练习模式</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/wrong-answers"><i class="fas fa-bookmark"></i> 错题本</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/practice-history"><i class="fas fa-history"></i> 练习历史</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/question-management"><i class="fas fa-cog"></i> 题库管理</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4"><i class="fas fa-cog text-success"></i> 题库管理</h2>
+            </div>
+        </div>
+
+        <!-- 爬虫设置 -->
+        <div class="row mb-4">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-spider"></i> 网页爬虫</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="crawl-form">
+                            <div class="mb-3">
+                                <label for="crawl-url" class="form-label">目标网站URL</label>
+                                <input type="url" class="form-control" id="crawl-url" 
+                                       placeholder="https://www.example.com/questions" required>
+                                <div class="form-text">请输入要爬取题目的网站URL</div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg w-100" id="crawl-btn">
+                                <i class="fas fa-spider"></i> 开始爬取
+                            </button>
+                        </form>
+                        
+                        <!-- 进度条 -->
+                        <div class="mt-3 d-none" id="crawl-progress-container">
+                            <div class="progress crawl-progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                     role="progressbar" id="crawl-progress" style="width: 0%"></div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <small id="progress-text">正在爬取...</small>
+                            </div>
+                        </div>
+                        
+                        <!-- 结果信息 -->
+                        <div class="mt-3 d-none" id="crawl-result">
+                            <div class="alert alert-success" id="success-message">
+                                <i class="fas fa-check-circle"></i> 爬取成功！新增 <span id="saved-count">0</span> 道题目。
+                            </div>
+                            <div class="alert alert-danger d-none" id="error-message">
+                                <i class="fas fa-exclamation-circle"></i> 爬取失败：<span id="error-text"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 题库统计 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 题库统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="stats-container">
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h4 class="card-title text-primary" id="total-questions">-</h4>
+                                        <p class="card-text">总题目数</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h4 class="card-title text-success" id="zh-questions">-</h4>
+                                        <p class="card-text">中文题目</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h4 class="card-title text-info" id="en-questions">-</h4>
+                                        <p class="card-text">英文题目</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 题目筛选和列表 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> 题库题目</h5>
+                        <button class="btn btn-light btn-sm" id="refresh-questions">
+                            <i class="fas fa-sync"></i> 刷新
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- 筛选条件 -->
+                        <div class="filter-section mb-4">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="filter-source" class="form-label">来源</label>
+                                    <select class="form-select" id="filter-source">
+                                        <option value="">全部来源</option>
+                                        <!-- 动态填充来源选项 -->
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="filter-language" class="form-label">语言</label>
+                                    <select class="form-select" id="filter-language">
+                                        <option value="">全部语言</option>
+                                        <option value="zh">中文</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" id="apply-filters">
+                                        <i class="fas fa-filter"></i> 应用筛选
+                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 题目列表 -->
+                        <div id="questions-list">
+                            <!-- 题目将通过JavaScript动态加载 -->
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">加载中...</span>
+                                </div>
+                                <p class="mt-2">正在加载题目...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 分页控件 -->
+                        <div class="d-flex justify-content-center mt-4" id="pagination-container">
+                            <!-- 分页控件将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手动添加题目 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> 手动添加题目</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="add-question-form">
+                            <div class="mb-3">
+                                <label for="question-text" class="form-label">题目</label>
+                                <textarea class="form-control" id="question-text" rows="3" required></textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="question-language" class="form-label">语言</label>
+                                    <select class="form-select" id="question-language" required>
+                                        <option value="zh">中文</option>
+                                        <option value="en">English</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="question-category" class="form-label">分类</label>
+                                    <input type="text" class="form-control" id="question-category" placeholder="例如: 交通标志">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="question-source" class="form-label">来源</label>
+                                <input type="text" class="form-control" id="question-source" placeholder="例如: g1-test.com">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">选项</label>
+                                <div class="row g-2 mb-2" id="options-container">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">A</span>
+                                            <input type="text" class="form-control option-input" placeholder="选项A内容" data-option="A" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">B</span>
+                                            <input type="text" class="form-control option-input" placeholder="选项B内容" data-option="B" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">C</span>
+                                            <input type="text" class="form-control option-input" placeholder="选项C内容" data-option="C" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">D</span>
+                                            <input type="text" class="form-control option-input" placeholder="选项D内容" data-option="D" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="correct-answer" class="form-label">正确答案</label>
+                                <select class="form-select" id="correct-answer" required>
+                                    <option value="">请选择正确答案</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="explanation" class="form-label">解释</label>
+                                <textarea class="form-control" id="explanation" rows="2"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> 添加题目
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <h5 class="mb-3">加拿大G1驾驶考试学习软件</h5>
+                    <p class="mb-0">全面提升您的驾驶理论知识，助您顺利通过G1考试。</p>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">快速链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="footer-link">首页</a></li>
+                        <li><a href="/practice" class="footer-link">练习模式</a></li>
+                        <li><a href="/wrong-answers" class="footer-link">错题本</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">联系我们</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="footer-link"><i class="fab fa-github me-2"></i>GitHub</a></li>
+                        <li><a href="#" class="footer-link"><i class="fas fa-envelope me-2"></i>支持邮箱</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 加拿大G1驾驶考试学习软件. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载统计信息
+            loadStats();
+            
+            // 设置表单提交事件
+            document.getElementById('crawl-form').addEventListener('submit', crawlQuestions);
+            document.getElementById('add-question-form').addEventListener('submit', addQuestion);
+            document.getElementById('apply-filters').addEventListener('click', function() {
+                currentPage = 1;  // 重置到第一页
+                loadQuestions();
+            });
+            document.getElementById('refresh-questions').addEventListener('click', function() {
+                currentPage = 1;  // 重置到第一页
+                loadQuestions();
+            });
+            
+            // 初始加载题目和来源选项
+            loadQuestions();
+            loadSources();
+        });
+
+        // 当前页码
+        let currentPage = 1;
+
+        // 加载统计信息
+        function loadStats() {
+            fetch('/api/stats')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('total-questions').textContent = data.total_questions;
+                document.getElementById('zh-questions').textContent = data.zh_questions;
+                document.getElementById('en-questions').textContent = data.en_questions;
+            })
+            .catch(error => {
+                console.error('加载统计信息时出错:', error);
+            });
+        }
+
+        // 加载来源选项
+        function loadSources() {
+            fetch('/api/question-sources')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const sourceSelect = document.getElementById('filter-source');
+                // 保留"全部来源"选项
+                const allOption = sourceSelect.querySelector('option[value=""]');
+                
+                // 清空除"全部来源"外的所有选项
+                while (sourceSelect.children.length > 1) {
+                    sourceSelect.removeChild(sourceSelect.lastChild);
+                }
+                
+                // 添加来源选项
+                data.sources.forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source;
+                    option.textContent = source;
+                    sourceSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('加载来源选项时出错:', error);
+            });
+        }
+
+        // 加载题目列表
+        function loadQuestions(page = 1) {
+            // 获取筛选条件
+            const source = document.getElementById('filter-source').value;
+            const language = document.getElementById('filter-language').value;
+            
+            // 构建查询参数
+            const params = new URLSearchParams();
+            params.append('page', page);
+            params.append('per_page', 10);
+            if (source) params.append('source', source);
+            if (language) params.append('language', language);
+            
+            // 显示加载状态
+            document.getElementById('questions-list').innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在加载题目...</p>
+                </div>
+            `;
+            
+            // 发送请求
+            fetch(`/api/questions?${params}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayQuestions(data.questions);
+                displayPagination(data);
+                currentPage = data.current_page;
+            })
+            .catch(error => {
+                console.error('加载题目时出错:', error);
+                document.getElementById('questions-list').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i> 加载题目时出错，请稍后重试。
+                        <br>错误详情: ${error.message}
+                    </div>
+                `;
+            });
+        }
+
+        // 显示题目列表
+        function displayQuestions(questions) {
+            const container = document.getElementById('questions-list');
+            
+            if (questions.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <h4 class="mb-3">没有找到题目</h4>
+                        <p class="mb-0">请尝试调整筛选条件或添加新题目。</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            questions.forEach(question => {
+                // 解析选项
+                let options;
+                if (typeof question.options === 'string') {
+                    try {
+                        options = JSON.parse(question.options);
+                    } catch (e) {
+                        console.error('解析选项时出错:', e);
+                        options = {};
+                    }
+                } else {
+                    options = question.options;
+                }
+                
+                // 构建选项HTML
+                let optionsHtml = '';
+                for (const [key, value] of Object.entries(options)) {
+                    optionsHtml += `
+                        <div class="option-item" data-question-id="${question.id}" data-option="${key}">
+                            <strong>${key}.</strong> ${value}
+                        </div>
+                    `;
+                }
+                
+                // 构建图片HTML（如果存在）
+                let imageHtml = '';
+                if (question.image_path) {
+                    // 确保路径格式正确
+                    let imgPath = question.image_path;
+                    if (!imgPath.startsWith('/')) {
+                        imgPath = '/' + imgPath;
+                    }
+                    imageHtml = `<div class="text-center mb-3"><img src="${imgPath}" class="img-fluid" style="max-height: 200px;" alt="题目图片"></div>`;
+                }
+                
+                html += `
+                    <div class="question-card">
+                        <div class="question-card-header">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <span class="badge bg-primary me-2">ID: ${question.id}</span>
+                                    <span class="badge bg-secondary me-2">${question.language === 'zh' ? '中文' : 'English'}</span>
+                                    <span class="badge bg-info">${question.source || '未知来源'}</span>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteQuestion(${question.id})">
+                                        <i class="fas fa-trash"></i> 删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="question-card-body">
+                            <h5>${question.question_text}</h5>
+                            ${imageHtml}
+                            <div class="mt-3">
+                                <p><strong>选项:</strong></p>
+                                <div class="options-container" id="options-${question.id}">
+                                    ${optionsHtml}
+                                </div>
+                            </div>
+                            <div class="mt-3 d-flex justify-content-between">
+                                <div>
+                                    <strong>正确答案:</strong> 
+                                    <span class="text-success">${question.correct_id || '未设置'}</span>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-primary" onclick="updateCorrectAnswer(${question.id})">
+                                        <i class="fas fa-save"></i> 保存答案
+                                    </button>
+                                </div>
+                            </div>
+                            ${question.explanation ? `<div class="mt-3"><strong>解释:</strong> ${question.explanation}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            
+            // 为选项添加点击事件
+            document.querySelectorAll('.option-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const questionId = this.getAttribute('data-question-id');
+                    const option = this.getAttribute('data-option');
+                    
+                    // 移除同题目其他选项的选中状态
+                    document.querySelectorAll(`.option-item[data-question-id="${questionId}"]`).forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // 添加选中状态
+                    this.classList.add('selected');
+                });
+            });
+        }
+
+        // 显示分页控件
+        function displayPagination(data) {
+            const container = document.getElementById('pagination-container');
+            const { total, pages, current_page, per_page } = data;
+            
+            if (pages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = `
+                <nav aria-label="题目分页">
+                    <ul class="pagination">
+            `;
+            
+            // 上一页按钮
+            if (current_page > 1) {
+                html += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadQuestions(${current_page - 1}); return false;">上一页</a>
+                    </li>
+                `;
+            } else {
+                html += `
+                    <li class="page-item disabled">
+                        <span class="page-link">上一页</span>
+                    </li>
+                `;
+            }
+            
+            // 页码按钮
+            for (let i = 1; i <= pages; i++) {
+                if (i === current_page) {
+                    html += `
+                        <li class="page-item active">
+                            <span class="page-link">${i}</span>
+                        </li>
+                    `;
+                } else {
+                    html += `
+                        <li class="page-item">
+                            <a class="page-link" href="#" onclick="loadQuestions(${i}); return false;">${i}</a>
+                        </li>
+                    `;
+                }
+            }
+            
+            // 下一页按钮
+            if (current_page < pages) {
+                html += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadQuestions(${current_page + 1}); return false;">下一页</a>
+                    </li>
+                `;
+            } else {
+                html += `
+                    <li class="page-item disabled">
+                        <span class="page-link">下一页</span>
+                    </li>
+                `;
+            }
+            
+            html += `
+                    </ul>
+                </nav>
+                <div class="mt-2 text-muted">
+                    总共 ${total} 道题目，当前第 ${current_page} 页，共 ${pages} 页
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // 更新正确答案
+        function updateCorrectAnswer(questionId) {
+            // 查找选中的选项
+            const selectedOption = document.querySelector(`.option-item[data-question-id="${questionId}"].selected`);
+            
+            if (!selectedOption) {
+                alert('请先选择一个选项作为正确答案');
+                return;
+            }
+            
+            const correctId = selectedOption.getAttribute('data-option');
+            
+            // 发送更新请求
+            fetch(`/api/questions/${questionId}/correct-answer`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ correct_id: correctId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('正确答案更新成功');
+                    // 重新加载题目列表
+                    loadQuestions(currentPage);
+                } else {
+                    alert('更新失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('更新正确答案时出错:', error);
+                alert('更新过程中出错，请稍后重试');
+            });
+        }
+
+        // 删除题目
+        function deleteQuestion(questionId) {
+            if (!confirm('确定要删除这道题目吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            fetch(`/api/questions/${questionId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('题目删除成功');
+                    // 重新加载题目列表
+                    loadQuestions(currentPage);
+                } else {
+                    alert('删除失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('删除题目时出错:', error);
+                alert('删除过程中出错，请稍后重试');
+            });
+        }
+
+        // 爬取题目
+        function crawlQuestions(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('crawl-url').value;
+            if (!url) {
+                alert('请输入目标网站URL');
+                return;
+            }
+            
+            // 显示进度条
+            document.getElementById('crawl-progress-container').classList.remove('d-none');
+            document.getElementById('crawl-result').classList.add('d-none');
+            document.getElementById('crawl-btn').disabled = true;
+            
+            // 发送爬取请求
+            fetch('/api/scrape', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 隐藏进度条
+                document.getElementById('crawl-progress-container').classList.add('d-none');
+                document.getElementById('crawl-btn').disabled = false;
+                
+                // 显示结果
+                document.getElementById('crawl-result').classList.remove('d-none');
+                
+                if (data.success) {
+                    document.getElementById('success-message').classList.remove('d-none');
+                    document.getElementById('error-message').classList.add('d-none');
+                    document.getElementById('saved-count').textContent = data.saved_count;
+                    
+                    // 重新加载统计信息和题目列表
+                    loadStats();
+                    currentPage = 1;
+                    loadQuestions();
+                } else {
+                    document.getElementById('success-message').classList.add('d-none');
+                    document.getElementById('error-message').classList.remove('d-none');
+                    document.getElementById('error-text').textContent = data.error;
+                }
+            })
+            .catch(error => {
+                // 隐藏进度条
+                document.getElementById('crawl-progress-container').classList.add('d-none');
+                document.getElementById('crawl-btn').disabled = false;
+                
+                // 显示错误信息
+                document.getElementById('crawl-result').classList.remove('d-none');
+                document.getElementById('success-message').classList.add('d-none');
+                document.getElementById('error-message').classList.remove('d-none');
+                document.getElementById('error-text').textContent = error.message || '未知错误';
+            });
+        }
+
+        // 添加题目
+        function addQuestion(e) {
+            e.preventDefault();
+            
+            // 获取表单数据
+            const questionText = document.getElementById('question-text').value;
+            const language = document.getElementById('question-language').value;
+            const category = document.getElementById('question-category').value;
+            const source = document.getElementById('question-source').value;
+            const correctAnswer = document.getElementById('correct-answer').value;
+            const explanation = document.getElementById('explanation').value;
+            
+            // 获取选项
+            const options = {};
+            document.querySelectorAll('.option-input').forEach(input => {
+                options[input.getAttribute('data-option')] = input.value;
+            });
+            
+            // 验证数据
+            if (!questionText || !correctAnswer || Object.values(options).some(opt => !opt)) {
+                alert('请填写所有必填字段');
+                return;
+            }
+            
+            // 创建题目对象
+            const question = {
+                question_text: questionText,
+                options: JSON.stringify(options),
+                correct_answer: options[correctAnswer],
+                correct_id: correctAnswer,
+                language: language,
+                category: category,
+                source: source,
+                explanation: explanation
+            };
+            
+            // 发送添加请求
+            fetch('/api/questions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(question)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('题目添加成功');
+                    // 重置表单
+                    document.getElementById('add-question-form').reset();
+                    // 重新加载统计信息和题目列表
+                    loadStats();
+                    currentPage = 1;
+                    loadQuestions();
+                } else {
+                    alert('添加失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('添加题目时出错:', error);
+                alert('添加过程中出错，请稍后重试');
+            });
+        }
+    </script>
+</body>
+</html>
