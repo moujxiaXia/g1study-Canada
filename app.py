@@ -1,7 +1,6 @@
 import os
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from models import db, Question, WrongAnswer, PracticeSession
-from scraper import scrape_questions
 from datetime import datetime
 import json
 
@@ -357,36 +356,6 @@ def api_stats():
         'wrong_answers_count': wrong_answers_count,
         'recent_scores': recent_scores
     })
-
-# API端点：爬取题目
-@app.route('/api/scrape', methods=['POST'])
-def api_scrape():
-    data = request.get_json()
-    url = data.get('url')
-    
-    try:
-        questions = scrape_questions(url)
-        saved_count = 0
-        
-        for q in questions:
-            # 检查题目是否已存在
-            existing = Question.query.filter_by(question_text=q['question_text']).first()
-            if not existing:
-                question = Question(
-                    question_text=q['question_text'],
-                    options=json.dumps(q['options']),
-                    correct_answer=q['correct_answer'],
-                    explanation=q['explanation'],
-                    language=q['language'],
-                    category=q['category']
-                )
-                db.session.add(question)
-                saved_count += 1
-        
-        db.session.commit()
-        return jsonify({'success': True, 'saved_count': saved_count})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     #with app.app_context():
